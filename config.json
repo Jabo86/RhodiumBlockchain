@@ -1,0 +1,18 @@
+{
+    "network": {
+        "port": 8334,
+        "rpc_port": 8335,
+        "seed_nodes": ["localhost:8334"]
+    },
+    "blockchain": {
+        "difficulty": 2,
+        "mining_reward": 50.0,
+        "block_time": 150,
+        "max_supply": 21000000,
+        "fee_per_byte": 0.001
+    },
+    "wallet": {
+        "address_prefix": "jabo86",
+        "key_algorithm": "secp256k1"
+    }
+}

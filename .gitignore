@@ -1,0 +1,20 @@
+# Wallet files
+wallet.dat
+wallet_test.dat
+*.dat
+
+# Blockchain data
+blockchain_data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
