@@ -65,13 +65,13 @@ class RhodiumBlockchain:
         self.chain = []
         self.pending_transactions = []
         
-        # PARAMETRI ESATTI COME BITCOIN
-        self.initial_difficulty = 4  # Difficulty iniziale
-        self.target_block_time = 600  # 10 minuti ESATTI come Bitcoin
-        self.blocks_per_difficulty_adjustment = 2016  # ESATTO come Bitcoin (2 settimane)
-        self.blocks_per_halving = 210000  # ESATTO come Bitcoin (~4 anni)
-        self.initial_reward = 50.0  # ESATTO come Bitcoin originale
-        self.max_supply = 21000000  # ESATTO come Bitcoin
+        # PARAMETRI DI TEST - HALVING OGNI 10 BLOCCHI
+        self.initial_difficulty = 4
+        self.target_block_time = 600  # 10 minuti
+        self.blocks_per_difficulty_adjustment = 5  # Ogni 5 blocchi per test
+        self.blocks_per_halving = 10  # OGNI 10 BLOCCHI PER TESTARE
+        self.initial_reward = 50.0
+        self.max_supply = 21000000
         
         self.total_mined = 0
         self.difficulty = self.initial_difficulty
@@ -83,7 +83,6 @@ class RhodiumBlockchain:
         if not self.chain:
             self.create_genesis_block()
         else:
-            # Aggiorna difficulty basata sulla blockchain caricata
             self.difficulty = self.calculate_difficulty()
     
     def create_genesis_block(self):
@@ -103,48 +102,39 @@ class RhodiumBlockchain:
         print("✅ Genesis Block creato!")
     
     def calculate_difficulty(self):
-        """CALCOLO DIFFICULTY ESATTO COME BITCOIN"""
+        """Difficulty adjustment semplificato per test"""
         if len(self.chain) <= self.blocks_per_difficulty_adjustment:
             return self.initial_difficulty
         
-        # Prendi l'ultimo blocco del periodo precedente
-        last_adjustment_block = self.chain[-self.blocks_per_difficulty_adjustment]
-        current_block = self.chain[-1]
+        # Calcola tempo medio degli ultimi blocchi
+        recent_blocks = min(self.blocks_per_difficulty_adjustment, len(self.chain) - 1)
+        total_time = 0
         
-        # Tempo reale impiegato per i 2016 blocchi
-        actual_time = current_block.timestamp - last_adjustment_block.timestamp
+        for i in range(1, recent_blocks + 1):
+            block_time = self.chain[-i].timestamp - self.chain[-(i+1)].timestamp
+            total_time += max(1, block_time)  # Evita divisione per zero
         
-        # Tempo atteso per 2016 blocchi (2 settimane)
-        expected_time = self.blocks_per_difficulty_adjustment * self.target_block_time
+        average_time = total_time / recent_blocks
         
-        print(f"📊 Adjusting difficulty:")
-        print(f"   Periodo: {actual_time:.0f}s (atteso: {expected_time:.0f}s)")
-        print(f"   Ratio: {actual_time/expected_time:.2f}")
-        
-        # Limita l'aggiustamento a 4x come Bitcoin
-        if actual_time < expected_time / 4:
-            actual_time = expected_time / 4
-        elif actual_time > expected_time * 4:
-            actual_time = expected_time * 4
-        
-        # Calcola nuovo difficulty
-        difficulty_ratio = actual_time / expected_time
-        new_difficulty = self.difficulty * difficulty_ratio
-        
-        # Arrotonda e limita
-        new_difficulty = max(1, min(20, int(new_difficulty + 0.5)))  # Max difficulty 20 per testing
-        
-        print(f"   Difficulty: {self.difficulty} → {new_difficulty}")
-        return new_difficulty
+        # Adjust difficulty
+        if average_time < self.target_block_time * 0.5:  # Troppo veloce
+            new_diff = self.difficulty + 1
+            print(f"📈 Aumento difficulty: {self.difficulty} → {new_diff}")
+            return new_diff
+        elif average_time > self.target_block_time * 2:  # Troppo lento
+            new_diff = max(1, self.difficulty - 1)
+            print(f"📉 Diminuzione difficulty: {self.difficulty} → {new_diff}")
+            return new_diff
+        else:
+            return self.difficulty
     
     def get_current_reward(self):
-        """CALCOLO REWARD CON HALVING ESATTO COME BITCOIN"""
+        """HALVING OGNI 10 BLOCCHI PER TEST"""
         halvings = len(self.chain) // self.blocks_per_halving
         reward = self.initial_reward / (2 ** halvings)
-        return max(reward, 0)  # Non scendere sotto zero
+        return max(reward, 0)
     
     def get_next_halving_info(self):
-        """Informazioni sul prossimo halving"""
         blocks_until_halving = self.blocks_per_halving - (len(self.chain) % self.blocks_per_halving)
         current_reward = self.get_current_reward()
         next_reward = current_reward / 2 if current_reward > 0 else 0
@@ -194,14 +184,12 @@ class RhodiumBlockchain:
                 
                 print(f"✅ Blockchain caricata: {len(self.chain)} blocchi")
                 
-                # Calcola total mined e halving info
                 self.total_mined = 0
                 for block in self.chain:
                     for tx in block.transactions:
                         if tx.sender == "0":
                             self.total_mined += tx.amount
                 
-                # Mostra info halving
                 halving_info = self.get_next_halving_info()
                 print(f"💰 Reward attuale: {halving_info['current_reward']} RHO")
                 print(f"⏳ Prossimo halving: blocco {halving_info['halving_at_block']} ({halving_info['blocks_remaining']} blocchi rimanenti)")
@@ -242,7 +230,6 @@ class RhodiumBlockchain:
     def add_transaction(self, transaction):
         self.pending_transactions.append(transaction)
         self.save_pending()
-        print(f"✅ Transazione aggiunta alla pool pendente")
         return True
     
     def get_balance(self, address):
@@ -256,9 +243,9 @@ class RhodiumBlockchain:
         return balance
     
     def mine_block(self, miner_address):
-        """MINING CON HALVING E DIFFICULTY COME BITCOIN"""
-        # Aggiorna difficulty ogni 2016 blocchi
-        if len(self.chain) % self.blocks_per_difficulty_adjustment == 0:
+        """MINING CON HALVING DI TEST"""
+        # Aggiorna difficulty periodicamente
+        if len(self.chain) > 0 and len(self.chain) % self.blocks_per_difficulty_adjustment == 0:
             self.difficulty = self.calculate_difficulty()
         
         current_reward = self.get_current_reward()
@@ -267,18 +254,15 @@ class RhodiumBlockchain:
         print(f"⛏️  Mining blocco {len(self.chain)}")
         print(f"   🎯 Difficulty: {self.difficulty}")
         print(f"   💰 Reward: {current_reward} RHO")
-        print(f"   ⏳ Halving: {halving_info['blocks_remaining']} blocchi rimanenti")
+        print(f"   ⏳ Halving tra: {halving_info['blocks_remaining']} blocchi")
         
         # CREA TRANSAZIONE DI REWARD
         reward_tx = Transaction("0", miner_address, current_reward, 0.0)
         
-        # Se ci sono transazioni pendenti, includile
         if self.pending_transactions:
             block_transactions = [reward_tx] + self.pending_transactions
-            print(f"   📦 Includendo {len(self.pending_transactions)} transazioni pendenti")
         else:
             block_transactions = [reward_tx]
-            print(f"   💰 Mining blocco vuoto (solo reward)")
         
         previous_hash = self.get_latest_block().hash
         
@@ -290,36 +274,30 @@ class RhodiumBlockchain:
         hashes_calculated = 0
         
         print(f"   🎯 Target: {target}")
-        print(f"   ⏳ Calcolando hash...", end='', flush=True)
         
         while new_block.hash[:self.difficulty] != target:
             new_block.nonce += 1
             new_block.hash = new_block.calculate_hash()
             hashes_calculated += 1
-            
-            if hashes_calculated % 10000 == 0:
-                print(".", end='', flush=True)
         
         mining_time = time.time() - start_time
         hash_rate = hashes_calculated / mining_time if mining_time > 0 else 0
         
-        print()
         print(f"✅ Blocco {new_block.index} minato in {mining_time:.2f} secondi!")
         print(f"   📊 Hash calcolati: {hashes_calculated:,}")
         print(f"   ⚡ Hash rate: {hash_rate:,.0f} H/s")
-        print(f"   🔨 Nonce: {new_block.nonce}")
         print(f"   💰 Ricompensa: {current_reward} RHO")
-        print(f"   📦 Transazioni: {len(block_transactions)}")
         
-        # Controlla se è avvenuto un halving
-        if (new_block.index + 1) % self.blocks_per_halving == 0:
-            new_reward = self.get_current_reward()
-            print(f"🎉 HALVING! Nuovo reward: {new_reward} RHO")
-        
+        # CONTROLLO HALVING
+        old_reward = current_reward
         self.chain.append(new_block)
         self.pending_transactions = []
         self.total_mined += current_reward
         self.save_chain()
+        
+        new_reward = self.get_current_reward()
+        if new_reward < old_reward:
+            print(f"🎉 HALVING AVVENUTO! Nuovo reward: {new_reward} RHO")
         
         if os.path.exists(self.pending_file):
             os.remove(self.pending_file)
@@ -341,11 +319,8 @@ class RhodiumBlockchain:
 if __name__ == "__main__":
     blockchain = RhodiumBlockchain()
     print(f"📦 Blocchi: {len(blockchain.chain)}")
-    print(f"📊 Transazioni pendenti: {len(blockchain.pending_transactions)}")
-    print(f"💰 RHO totali minati: {blockchain.total_mined:,.2f}")
+    print(f"🎯 Difficulty: {blockchain.difficulty}")
     
     halving_info = blockchain.get_next_halving_info()
-    print(f"🎯 Difficulty attuale: {blockchain.difficulty}")
-    print(f"💎 Reward attuale: {halving_info['current_reward']} RHO")
-    print(f"⏳ Prossimo halving: blocco {halving_info['halving_at_block']}")
-    print(f"   ({halving_info['blocks_remaining']} blocchi rimanenti)")
+    print(f"💎 Reward: {halving_info['current_reward']} RHO")
+    print(f"⏳ Prossimo halving: {halving_info['blocks_remaining']} blocchi")

@@ -1,0 +1,20 @@
+{
+  "chain": [
+    {
+      "index": 0,
+      "transactions": [
+        {
+          "sender": "0",
+          "recipient": "jabo867WwmfUePRCzYDNn6iqbAw",
+          "amount": 1000000.0,
+          "timestamp": 1762300989.781291
+        }
+      ],
+      "timestamp": 1762300989.781291,
+      "previous_hash": "0",
+      "nonce": 0,
+      "hash": "8dcb01263d1d44bff3a9eaa008af6b8b39234ebe257a05336c956cffa653aee0"
+    }
+  ],
+  "total_mined": 0
+}

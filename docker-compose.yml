@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  rhodium-node:
+    build: .
+    ports:
+      - "8334:8334"  # P2P
+      - "8335:8335"  # RPC
+      - "5000:5000"  # Explorer
+    volumes:
+      - ./blockchain_data:/app/blockchain_data
+      - ./wallet.dat:/app/wallet.dat
+    restart: unless-stopped
+    command: ["cli"]
+
+  rhodium-miner:
+    build: .
+    volumes:
+      - ./blockchain_data:/app/blockchain_data
+      - ./wallet.dat:/app/wallet.dat
+    depends_on:
+      - rhodium-node
+    restart: unless-stopped
+    command: ["python3", "rhodium_miner.py"]
+
+  rhodium-explorer:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./blockchain_data:/app/blockchain_data
+    restart: unless-stopped
+    command: ["python3", "rhodium_explorer.py"]

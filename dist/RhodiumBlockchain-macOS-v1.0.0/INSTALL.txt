@@ -1,0 +1,12 @@
+Rhodium Blockchain - Installazione macOS
+========================================
+
+1. Assicurati di avere Python 3.8+ installato
+   (brew install python3 oppure da python.org)
+2. Installa le dipendenze: pip3 install -r requirements.txt
+3. Esegui 'Start-Wallet.command' per avviare il wallet
+4. Inizia a minare! ⛏️
+
+Per mining avanzato:
+python3 mining_pool.py
+python3 rhodium_p2p_network.py
